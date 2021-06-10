@@ -36,7 +36,7 @@ public class UserController {
 
 	public UserController(UserRepository userRepo, CartRepository cartRepo, BCryptPasswordEncoder bCryptPasswordEncoder) {
 		this.userRepository = userRepo;
-		this. cartRepository = cartRepo;
+		this.cartRepository = cartRepo;
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
 	}
 
@@ -44,18 +44,26 @@ public class UserController {
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id, Authentication authentication) {
 		Optional<User> user = null;
+
 		try {
 			authentication = SecurityContextHolder.getContext().getAuthentication();
-			if (userRepository.findByUsername(authentication.getName()) == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+			for(User u:userRepository.findAll()){
+				System.out.println(u.getId());
 			}
-			user = userRepository.findById(id);
-			if(userRepository.findByUsername(authentication.getName()) != null && user.get().getUsername() == null){
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			if (!userRepository.findById(id).isPresent()) {
+				System.out.println("abc");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+			}else{
+				if(!userRepository.findById(id).get().getUsername().equals(authentication.getName())){
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+				}
 			}
 		} catch (NullPointerException ne) {
+			System.out.println("null");
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
+		user = userRepository.findById(id);
 		return ResponseEntity.of(user);
 	}
 
