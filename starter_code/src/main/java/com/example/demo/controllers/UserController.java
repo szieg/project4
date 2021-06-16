@@ -2,6 +2,8 @@ package com.example.demo.controllers;
 
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +26,9 @@ import com.example.demo.model.requests.CreateUserRequest;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
-	
+
+	private static Logger logger = Logger.getRootLogger();
+
 	@Autowired
 	private UserRepository userRepository;
 	
@@ -44,23 +48,22 @@ public class UserController {
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id, Authentication authentication) {
 		Optional<User> user = null;
+		logger.warn("Unauthorized access tried");
 
 		try {
 			authentication = SecurityContextHolder.getContext().getAuthentication();
 
-			for(User u:userRepository.findAll()){
-				System.out.println(u.getId());
-			}
 			if (!userRepository.findById(id).isPresent()) {
-				System.out.println("abc");
+				logger.warn("Unauthorized access tried");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 			}else{
 				if(!userRepository.findById(id).get().getUsername().equals(authentication.getName())){
+					logger.warn("Unauthorized access tried");
 					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 				}
 			}
 		} catch (NullPointerException ne) {
-			System.out.println("null");
+			logger.error("NullpointerException: "+ ne.getMessage());
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 		}
 		user = userRepository.findById(id);
@@ -83,11 +86,12 @@ public class UserController {
 		user.setCart(cart);
 		if(createUserRequest.getPassword().length()<7 ||
 				!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
-			System.out.println("Error - Either length is less than 7 or pass and conf pass do not match. Unable to create " + createUserRequest.getUsername());
+			logger.error("Error - Either length is less than 7 or pass and conf pass do not match. Unable to create user" + createUserRequest.getUsername());
 			return ResponseEntity.badRequest().build();
 		}
 		user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
 		userRepository.save(user);
+		logger.info("User " + createUserRequest.getUsername() + " successfully created");
 		return ResponseEntity.ok(user);
 	}
 	

@@ -65,10 +65,6 @@ public class UserControllerTest {
         request.setPassword(PASS);
         request.setConfirmPassword(PASS);
 
-        ResponseEntity<User> response1 = userController.createUser(request);
-        User user2 = response1.getBody();
-        System.out.println("user created: " + user2.getId());
-
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
